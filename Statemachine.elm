@@ -8,61 +8,67 @@ import Window exposing (..)
 import Color exposing (..)
 
 
-type alias State =
-  { spec : StateSpec
-  , start : Time
+type alias Model =
+  { state : State
+  , startTime : Time
   , duration : Time }
 
 
-newState : StateSpec -> Time -> Time -> State
-newState spec start duration =
-  { spec = spec
-  , start = start
+model : State -> Time -> Time -> Model
+model state startTime duration =
+  { state = state
+  , startTime = startTime
   , duration = duration }
 
 
-type StateSpec = A | B | C
+modelA time = model A time (Time.second * 2)
+modelB time = model B time (Time.second * 0.5)
+modelC time = model C time (Time.second * 0.5)
 
-type Sig = SigReady | SigProcessing
+
+type State = A | B | C
 
 
-updateState : Time -> Maybe State -> Maybe State
-updateState time maybeState =
+type Transition = TransitionReady | TransitionProcessing
+
+
+updateModel : Time -> Maybe Model -> Maybe Model
+updateModel time maybeModel =
   let
-    sig : State -> Sig
-    sig state =
-      if ((time - state.start) > state.duration) then SigReady
-      else SigProcessing
+    transition : Model -> Transition
+    transition model =
+      if ((time - model.startTime) > model.duration) then TransitionReady
+      else TransitionProcessing
 
 
-    nextOnReady : State -> State
-    nextOnReady state =
-      case state.spec of
-        A -> newState B time (Time.second * 2)
-        B -> newState C time (Time.second * 0.5)
-        C -> newState A time (Time.second * 0.2)
+    updateOnReady : Model -> Model
+    updateOnReady model =
+      case model.state of
+        A -> modelB time
+        B -> modelC time
+        C -> modelA time
 
 
-    state = withDefault (initial time) maybeState
-    nextState = case sig state of
-      SigReady -> nextOnReady state
-      SigProcessing -> state
+    model = withDefault (initial time) maybeModel
+    nextModel = case transition model of
+      TransitionReady -> updateOnReady model
+      TransitionProcessing -> model
   in
-    Just nextState
+    Just nextModel
 
 
-initial : Time -> State
-initial time = newState A time Time.second
+initial : Time -> Model
+initial time = modelA time
 
 
-view : (Int, Int) -> Maybe State -> Element
-view (w, h) maybeState =
+view : (Int, Int) -> Maybe Model -> Element
+view (w, h) maybeModel =
   let
-    viewState : State -> List Form
-    viewState state =
+    viewState : Model -> List Form
+    viewState model =
       let
         shape = square 250
-        (txt, bgForm) = case state.spec of
+        (txt, bgForm) = case model.state of
           A -> (fromString "A", filled Color.red shape)
           B -> (fromString "B", filled Color.green shape)
           C -> (fromString "C", filled Color.yellow shape)
@@ -76,15 +82,15 @@ view (w, h) maybeState =
 
 
 
-    elems = case maybeState of
+    elems = case maybeModel of
       Nothing -> []
       Just state -> viewState state
   in
     collage w h elems
 
 
-stateSignal : Signal (Maybe State)
-stateSignal = Signal.foldp updateState Nothing (every (Time.second / 10))
+modelSignal : Signal (Maybe Model)
+modelSignal = Signal.foldp updateModel Nothing (every (Time.millisecond))
 
 
-main = Signal.map2 view dimensions stateSignal
+main = Signal.map2 view dimensions modelSignal
