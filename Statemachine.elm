@@ -63,6 +63,10 @@ updateModel time maybeModel =
         C -> modelA model.pos time
 
 
+    updatePos : Pos -> Float -> Float -> Pos
+    updatePos pos dx dy = { x = pos.x + dx, y = pos.y + dy }
+
+
     model = withDefault (initial time) maybeModel
     nextModel = case transition model of
       TransitionReady -> updateOnReady model
