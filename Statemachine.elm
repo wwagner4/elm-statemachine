@@ -50,6 +50,11 @@ type Transition = TransitionReady | TransitionProcessing
 updateModel : Time -> Maybe Model -> Maybe Model
 updateModel time maybeModel =
   let
+    updatePos : Pos -> Float -> Float -> Pos
+    updatePos pos dx dy =
+      { x = pos.x + dx, y = pos.y + dy }
+
+
     transition : Model -> Transition
     transition model =
       if ((time - model.startTime) > model.duration) then TransitionReady
@@ -57,35 +62,29 @@ updateModel time maybeModel =
 
 
     updateOnReady : Model -> Model
-    updateOnReady model =
-      case model.state of
-        A -> modelB model.pos time
-        B -> modelC model.pos time
-        C -> modelA model.pos time
-
-
-    updatePos : Pos -> Float -> Float -> Pos
-    updatePos pos dx dy = { x = pos.x + dx, y = pos.y + dy }
+    updateOnReady model = case model.state of
+      A -> modelB model.pos time
+      B -> modelC model.pos time
+      C -> modelA model.pos time
 
 
     updateOnProcessing : Model -> Model
-    updateOnProcessing model =
-      case model.state of
-        A -> modelA (updatePos model.pos 0 0) time
-        B -> modelB (updatePos model.pos 10 0) time
-        C -> modelC (updatePos model.pos 0 10) time
-
+    updateOnProcessing model = model
 
     model = withDefault (initial time) maybeModel
     nextModel = case transition model of
       TransitionReady -> updateOnReady model
-      TransitionProcessing -> model
+      TransitionProcessing -> updateOnProcessing model
   in
     Just nextModel
 
 
 initial : Time -> Model
 initial time = modelA posZero time
+
+
+view1 : (Int, Int) -> Maybe Model -> Element
+view1 (w, h) maybeModel = show maybeModel
 
 
 view : (Int, Int) -> Maybe Model -> Element
@@ -125,4 +124,4 @@ modelSignal : Signal (Maybe Model)
 modelSignal = Signal.foldp updateModel Nothing (every (Time.millisecond))
 
 
-main = Signal.map2 view dimensions modelSignal
+main = Signal.map2 view1 dimensions modelSignal
