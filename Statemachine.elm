@@ -26,6 +26,15 @@ modelB time = model B time (Time.second * 0.5)
 modelC time = model C time (Time.second * 0.5)
 
 
+type alias Pos =
+  { x : Float
+  , y : Float }
+
+
+pos : Float -> Float -> Pos
+pos x y = { x = x, y = y}
+
+
 type State = A | B | C
 
 
