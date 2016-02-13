@@ -69,7 +69,11 @@ updateModel time maybeModel =
 
 
     updateOnProcessing : Model -> Model
-    updateOnProcessing model = model
+    updateOnProcessing model = case model.state of
+      A -> { model | pos = updatePos model.pos 1 1 }
+      B -> { model | pos = updatePos model.pos 0 -4 }
+      C -> { model | pos = updatePos model.pos -4 0 }
+
 
     model = withDefault (initial time) maybeModel
     nextModel = case transition model of
@@ -121,7 +125,7 @@ view (w, h) maybeModel =
 
 
 modelSignal : Signal (Maybe Model)
-modelSignal = Signal.foldp updateModel Nothing (every (Time.millisecond))
+modelSignal = Signal.foldp updateModel Nothing (every (Time.millisecond * 10))
 
 
-main = Signal.map2 view1 dimensions modelSignal
+main = Signal.map2 view dimensions modelSignal
