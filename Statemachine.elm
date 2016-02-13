@@ -10,20 +10,22 @@ import Color exposing (..)
 
 type alias Model =
   { state : State
+  , pos : Pos
   , startTime : Time
   , duration : Time }
 
 
-model : State -> Time -> Time -> Model
-model state startTime duration =
+model : State -> Pos -> Time -> Time -> Model
+model state pos startTime duration =
   { state = state
+  , pos = pos
   , startTime = startTime
   , duration = duration }
 
 
-modelA time = model A time (Time.second * 2)
-modelB time = model B time (Time.second * 0.5)
-modelC time = model C time (Time.second * 0.5)
+modelA pos time = model A pos time (Time.second * 2)
+modelB pos time = model B pos time (Time.second * 0.5)
+modelC pos time = model C pos time (Time.second * 0.5)
 
 
 type alias Pos =
@@ -32,7 +34,10 @@ type alias Pos =
 
 
 pos : Float -> Float -> Pos
-pos x y = { x = x, y = y}
+pos x y = { x = x, y = y }
+
+posZero : Pos
+posZero = {x  = 0, y = 0 }
 
 
 type State = A | B | C
@@ -53,9 +58,9 @@ updateModel time maybeModel =
     updateOnReady : Model -> Model
     updateOnReady model =
       case model.state of
-        A -> modelB time
-        B -> modelC time
-        C -> modelA time
+        A -> modelB model.pos time
+        B -> modelC model.pos time
+        C -> modelA model.pos time
 
 
     model = withDefault (initial time) maybeModel
@@ -67,7 +72,7 @@ updateModel time maybeModel =
 
 
 initial : Time -> Model
-initial time = modelA time
+initial time = modelA posZero time
 
 
 view : (Int, Int) -> Maybe Model -> Element
