@@ -5,6 +5,7 @@ import Time exposing (..)
 import Maybe exposing (..)
 import Signal exposing (..)
 import Window exposing (..)
+import Color exposing (..)
 
 
 type alias State =
@@ -57,24 +58,25 @@ initial : Time -> State
 initial time = createState time Time.second A
 
 
-run : Signal (Maybe State)
-run = Signal.foldp updateState Nothing (every (Time.second / 10))
+stateSignal : Signal (Maybe State)
+stateSignal = Signal.foldp updateState Nothing (every (Time.second / 10))
 
 
 viewState : State -> List Form
 viewState state =
   let
-    txt = case state.id of
-      A -> fromString "-A-"
-      B -> fromString "-B-"
-      C -> fromString "-C-"
-    form = txt
+    shape = square 250
+    (txt, bgForm) = case state.id of
+      A -> (fromString "A", filled Color.red shape)
+      B -> (fromString "B", filled Color.green shape)
+      C -> (fromString "C", filled Color.yellow shape)
+    txtForm = txt
       |> Text.height 300
       |> monospace
-      |> leftAligned
+      |> centered
       |> toForm
   in
-    [form]
+    [bgForm, txtForm]
 
 
 
@@ -89,4 +91,4 @@ view (w, h) maybeState =
 
 
 
-main = Signal.map2 view dimensions run
+main = Signal.map2 view dimensions stateSignal
