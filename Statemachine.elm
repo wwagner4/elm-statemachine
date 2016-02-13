@@ -5,82 +5,77 @@ import Time exposing (..)
 import Maybe exposing (..)
 import Signal exposing (..)
 import Window exposing (..)
+import Color exposing (..)
 
 
 type alias State =
-  { start : Time
-  , duration : Time
-  , id : StateId }
-
-createState : Time -> Time -> StateId -> State
-createState start duration id =
-  { start = start
-  , duration = duration
-  , id = id }
+  { spec : StateSpec
+  , start : Time
+  , duration : Time }
 
 
-type StateId = A | B | C
-
-type StateOfState = Ready | Processing
-
-
-stateOfState : State -> Time -> StateOfState
-stateOfState state time =
-  let
-    relTime = time - state.start
-  in
-    if (relTime > state.duration) then Ready
-    else Processing
+newState : StateSpec -> Time -> Time -> State
+newState spec start duration =
+  { spec = spec
+  , start = start
+  , duration = duration }
 
 
-updateReadySignal : State -> Time -> State
-updateReadySignal state time =
-  case state.id of
-    A -> createState time (Time.second * 2) B
-    B -> createState time (Time.second * 0.5) C
-    C -> createState time Time.second A
+type StateSpec = A | B | C
 
+type Sig = SigReady | SigProcessing
 
 
 updateState : Time -> Maybe State -> Maybe State
 updateState time maybeState =
   let
+    sig : State -> Sig
+    sig state =
+      if ((time - state.start) > state.duration) then SigReady
+      else SigProcessing
+
+
+    nextOnReady : State -> State
+    nextOnReady state =
+      case state.spec of
+        A -> newState B time (Time.second * 2)
+        B -> newState C time (Time.second * 0.5)
+        C -> newState A time (Time.second * 0.2)
+
+
     state = withDefault (initial time) maybeState
-    sofs = stateOfState state time
-    nextState = case sofs of
-      Ready -> updateReadySignal state time
-      Processing -> state
+    nextState = case sig state of
+      SigReady -> nextOnReady state
+      SigProcessing -> state
   in
     Just nextState
 
+
 initial : Time -> State
-initial time = createState time Time.second A
-
-
-run : Signal (Maybe State)
-run = Signal.foldp updateState Nothing (every (Time.second / 10))
-
-
-viewState : State -> List Form
-viewState state =
-  let
-    txt = case state.id of
-      A -> fromString "A"
-      B -> fromString "B"
-      C -> fromString "C"
-    form = txt
-      |> Text.height 300
-      |> monospace
-      |> leftAligned
-      |> toForm
-  in
-    [form]
-
+initial time = newState A time Time.second
 
 
 view : (Int, Int) -> Maybe State -> Element
 view (w, h) maybeState =
   let
+    viewState : State -> List Form
+    viewState state =
+      let
+        shape = square 250
+        (txt, bgForm) = case state.spec of
+          A -> (fromString "A", filled Color.red shape)
+          B -> (fromString "B", filled Color.green shape)
+          C -> (fromString "C", filled Color.yellow shape)
+        txtForm = txt
+          |> Text.height 300
+          |> monospace
+          |> centered
+          |> toForm
+      in
+        [bgForm, txtForm]
+
+
+
     elems = case maybeState of
       Nothing -> []
       Just state -> viewState state
@@ -88,5 +83,8 @@ view (w, h) maybeState =
     collage w h elems
 
 
+stateSignal : Signal (Maybe State)
+stateSignal = Signal.foldp updateState Nothing (every (Time.second / 10))
 
-main = Signal.map2 view dimensions run
+
+main = Signal.map2 view dimensions stateSignal

@@ -9,19 +9,19 @@ import Color exposing (..)
 
 
 type alias State =
-  { id : StateId
+  { spec : StateSpec
   , start : Time
   , duration : Time }
 
 
-newState : StateId -> Time -> Time -> State
-newState id start duration =
-  { id = id
+newState : StateSpec -> Time -> Time -> State
+newState spec start duration =
+  { spec = spec
   , start = start
   , duration = duration }
 
 
-type StateId = A | B | C
+type StateSpec = A | B | C
 
 type Sig = SigReady | SigProcessing
 
@@ -37,7 +37,7 @@ updateState time maybeState =
 
     nextOnReady : State -> State
     nextOnReady state =
-      case state.id of
+      case state.spec of
         A -> newState B time (Time.second * 2)
         B -> newState C time (Time.second * 0.5)
         C -> newState A time (Time.second * 0.2)
@@ -62,7 +62,7 @@ view (w, h) maybeState =
     viewState state =
       let
         shape = square 250
-        (txt, bgForm) = case state.id of
+        (txt, bgForm) = case state.spec of
           A -> (fromString "A", filled Color.red shape)
           B -> (fromString "B", filled Color.green shape)
           C -> (fromString "C", filled Color.yellow shape)
