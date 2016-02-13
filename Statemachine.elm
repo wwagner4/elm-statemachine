@@ -38,7 +38,12 @@ pos : Float -> Float -> Pos
 pos x y = { x = x, y = y }
 
 posZero : Pos
-posZero = {x  = 0, y = 0 }
+posZero = {x = 0, y = 0 }
+
+
+updatePos : Pos -> Float -> Float -> Pos
+updatePos pos dx dy =
+  { x = pos.x + dx, y = pos.y + dy }
 
 
 type State = A | B | C
@@ -50,11 +55,6 @@ type Transition = TransitionReady | TransitionProcessing
 updateModel : Time -> Maybe Model -> Maybe Model
 updateModel time maybeModel =
   let
-    updatePos : Pos -> Float -> Float -> Pos
-    updatePos pos dx dy =
-      { x = pos.x + dx, y = pos.y + dy }
-
-
     transitionOf : Model -> Transition
     transitionOf model =
       if ((time - model.startTime) > model.duration) then TransitionReady
@@ -84,7 +84,7 @@ updateModel time maybeModel =
 
 
 initial : Time -> Model
-initial time = modelA posZero time
+initial time = modelA (pos 100 100) time
 
 
 view1 : (Int, Int) -> Maybe Model -> Element
