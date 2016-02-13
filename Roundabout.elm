@@ -23,23 +23,20 @@ newState id start duration =
 
 type StateId = A | B | C
 
-type StateOfState = Ready | Processing
+type Sig = SigReady | SigProcessing
 
 
 updateState : Time -> Maybe State -> Maybe State
 updateState time maybeState =
   let
-    stateOfState : State -> Time -> StateOfState
-    stateOfState state time =
-      let
-        relTime = time - state.start
-      in
-        if (relTime > state.duration) then Ready
-        else Processing
+    sig : State -> Sig
+    sig state =
+      if ((time - state.start) > state.duration) then SigReady
+      else SigProcessing
 
 
-    updateReadySignal : State -> Time -> State
-    updateReadySignal state time =
+    nextOnReady : State -> State
+    nextOnReady state =
       case state.id of
         A -> newState B time (Time.second * 2)
         B -> newState C time (Time.second * 0.5)
@@ -47,9 +44,9 @@ updateState time maybeState =
 
 
     state = withDefault (initial time) maybeState
-    nextState = case (stateOfState state time) of
-      Ready -> updateReadySignal state time
-      Processing -> state
+    nextState = case sig state of
+      SigReady -> nextOnReady state
+      SigProcessing -> state
   in
     Just nextState
 
