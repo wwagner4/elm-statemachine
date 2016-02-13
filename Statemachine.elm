@@ -6,6 +6,7 @@ import Maybe exposing (..)
 import Signal exposing (..)
 import Window exposing (..)
 import Color exposing (..)
+import List exposing (..)
 
 
 type alias Model =
@@ -67,6 +68,14 @@ updateModel time maybeModel =
     updatePos pos dx dy = { x = pos.x + dx, y = pos.y + dy }
 
 
+    updateOnProcessing : Model -> Model
+    updateOnProcessing model =
+      case model.state of
+        A -> modelA (updatePos model.pos 0 0) time
+        B -> modelB (updatePos model.pos 10 0) time
+        C -> modelC (updatePos model.pos 0 10) time
+
+
     model = withDefault (initial time) maybeModel
     nextModel = case transition model of
       TransitionReady -> updateOnReady model
@@ -82,6 +91,10 @@ initial time = modelA posZero time
 view : (Int, Int) -> Maybe Model -> Element
 view (w, h) maybeModel =
   let
+    moveToPos : Form -> Pos -> Form
+    moveToPos form pos = move (pos.x, pos.y) form
+
+
     viewModel : Model -> List Form
     viewModel model =
       let
@@ -95,8 +108,10 @@ view (w, h) maybeModel =
           |> monospace
           |> centered
           |> toForm
+        bgMoved = moveToPos bgForm model.pos
+        txtMoved = moveToPos txtForm model.pos
       in
-        [bgForm, txtForm]
+        [bgMoved, txtMoved]
 
 
     elems = case maybeModel of
