@@ -78,8 +78,8 @@ initial time = modelA posZero time
 view : (Int, Int) -> Maybe Model -> Element
 view (w, h) maybeModel =
   let
-    viewState : Model -> List Form
-    viewState model =
+    viewModel : Model -> List Form
+    viewModel model =
       let
         shape = square 250
         (txt, bgForm) = case model.state of
@@ -95,10 +95,9 @@ view (w, h) maybeModel =
         [bgForm, txtForm]
 
 
-
     elems = case maybeModel of
       Nothing -> []
-      Just state -> viewState state
+      Just model -> viewModel model
   in
     collage w h elems
 
