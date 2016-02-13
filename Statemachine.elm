@@ -55,8 +55,8 @@ updateModel time maybeModel =
       { x = pos.x + dx, y = pos.y + dy }
 
 
-    transition : Model -> Transition
-    transition model =
+    transitionOf : Model -> Transition
+    transitionOf model =
       if ((time - model.startTime) > model.duration) then TransitionReady
       else TransitionProcessing
 
@@ -76,7 +76,7 @@ updateModel time maybeModel =
 
 
     model = withDefault (initial time) maybeModel
-    nextModel = case transition model of
+    nextModel = case transitionOf model of
       TransitionReady -> updateOnReady model
       TransitionProcessing -> updateOnProcessing model
   in
@@ -117,11 +117,11 @@ view (w, h) maybeModel =
         [bgMoved, txtMoved]
 
 
-    elems = case maybeModel of
+    forms = case maybeModel of
       Nothing -> []
       Just model -> viewModel model
   in
-    collage w h elems
+    collage w h forms
 
 
 modelSignal : Signal (Maybe Model)
