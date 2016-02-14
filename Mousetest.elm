@@ -18,21 +18,21 @@ inp (x, y) clickCnt time =
   , time = time }
 
 
-clickCount : Signal Int
-clickCount =
-  foldp (\click total -> total + 1) 0 Mouse.clicks
-
-
-timeSig : Signal Time
-timeSig = Time.every (Time.millisecond * 100)
-
-
 inpSig : Signal Inp
 inpSig =
   let
+    mouseSig : Signal (Int, Int)
     mouseSig = Signal.sampleOn clicks Mouse.position
+
+    clickCountSig : Signal Int
+    clickCountSig =
+      foldp (\click total -> total + 1) 0 Mouse.clicks
+
+    timeSig : Signal Time
+    timeSig = Time.every (Time.millisecond * 100)
+
   in
-    Signal.map3 inp mouseSig clickCount timeSig
+    Signal.map3 inp mouseSig clickCountSig timeSig
 
 
 main = Signal.map show inpSig
