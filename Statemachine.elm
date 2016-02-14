@@ -8,6 +8,7 @@ import Window exposing (..)
 import Color exposing (..)
 import List exposing (..)
 import Random exposing (..)
+import Easing exposing (..)
 
 
 type alias Model =
@@ -25,9 +26,9 @@ model state pos startTime duration =
   , duration = duration }
 
 
-modelA pos time = model (A (astate pos time)) pos time (Time.second * 2)
-modelB pos time = model B pos time (Time.second * 0.5)
-modelC pos time = model C pos time (Time.second * 0.5)
+modelA pos time = model (A (astate pos time)) pos time (Time.second * 3)
+modelB pos time = model B pos time (Time.second * 1)
+modelC pos time = model C pos time (Time.second * 1)
 
 
 type alias Pos =
@@ -55,8 +56,9 @@ astate : Pos -> Time -> AState
 astate pos time =
   let
     s0 = initialSeed (round time)
-    (dx, s1) = generate (Random.float -10 10) s0
-    (dy, s2) = generate (Random.float -10 10) s1
+    maxVal = 300
+    (dx, s1) = generate (Random.float -maxVal maxVal) s0
+    (dy, s2) = generate (Random.float -maxVal maxVal) s1
   in
     { startPos = pos
     , endPos = { x = pos.x + dx, y = pos.y + dy } }
@@ -78,17 +80,29 @@ updateModel time maybeModel =
 
 
     updateOnReady : Model -> Model
-    updateOnReady model = case model.state of
-      A astate -> modelB model.pos time
-      B -> modelC model.pos time
-      C -> modelA model.pos time
+    updateOnReady model =
+      case model.state of
+        A astate -> modelB model.pos time
+        B -> modelC model.pos time
+        C -> modelA model.pos time
 
 
     updateOnProcessing : Model -> Model
-    updateOnProcessing model = case model.state of
-      A astate -> { model | pos = updatePos model.pos 1 1 }
-      B -> { model | pos = updatePos model.pos 0 -4 }
-      C -> { model | pos = updatePos model.pos -4 0 }
+    updateOnProcessing model =
+      let
+        updatePosOnA : AState -> Model -> Pos
+        updatePosOnA astate model =
+          let
+            relTime = time - model.startTime
+            x = ease easeOutCubic Easing.float astate.startPos.x astate.endPos.x model.duration relTime
+            y = ease easeOutCubic Easing.float astate.startPos.y astate.endPos.y model.duration relTime
+          in
+            { x = x, y = y }
+      in
+        case model.state of
+          A astate -> { model | pos = (updatePosOnA astate model) }
+          B -> model
+          C -> model
 
 
     model = withDefault (initial time) maybeModel
