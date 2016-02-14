@@ -110,7 +110,7 @@ updateModel time maybeModel =
         case model.state of
           A stateOfA -> { model | pos = (updatePosOnA stateOfA model) }
           B -> model
-          C -> model
+          C -> { model | rot = model.rot + 0.1 }
 
 
     model = withDefault (initial time) maybeModel
@@ -151,8 +151,9 @@ view (w, h) maybeModel =
           |> toForm
         bgMoved = moveToPos bgForm model.pos
         txtMoved = moveToPos txtForm model.pos
+        forms = [bgMoved, txtMoved]
       in
-        [bgMoved, txtMoved]
+        List.map (rotate (model.rot)) forms
 
 
     forms = case maybeModel of
