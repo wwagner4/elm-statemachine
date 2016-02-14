@@ -133,19 +133,28 @@ view (w, h) maybeModel =
     viewModel : Model -> List Form
     viewModel model =
       let
-        shape = square 250
-        (txt, bgForm) = case model.state of
-          A moveBehaviour -> (fromString "A", filled Color.red shape)
-          B -> (fromString "B", filled Color.green shape)
-          C -> (fromString "C", filled Color.yellow shape)
-        txtForm = txt
-          |> Text.height 300
+        height = 300
+
+        bgForm : Color -> Form
+        bgForm color = square height
+          |> filled color
+
+        txtForm : String -> Form
+        txtForm txt = txt
+          |> fromString
+          |> Text.height height
           |> monospace
           |> centered
           |> toForm
-        bgMoved = moveToPos bgForm model.pos
-        txtMoved = moveToPos txtForm model.pos
-        forms = [bgMoved, txtMoved]
+          |> move (0, height / 25)
+
+        (txtForm1, bgColorForm) = case model.state of
+          A moveBehaviour -> (txtForm "A", bgForm Color.red)
+          B -> (txtForm "B", bgForm Color.green)
+          C -> (txtForm "C", bgForm Color.yellow)
+        grp = group [bgColorForm, txtForm1]
+        grpMoved = moveToPos grp model.pos
+        forms = [grpMoved]
       in
         List.map (rotate (model.rot)) forms
 

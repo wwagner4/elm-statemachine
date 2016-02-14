@@ -61,18 +61,21 @@ view (w, h) maybeState =
     viewState : State -> List Form
     viewState state =
       let
-        shape = square 250
-        (txt, bgForm) = case state.spec of
-          A -> (fromString "A", filled Color.red shape)
-          B -> (fromString "B", filled Color.green shape)
-          C -> (fromString "C", filled Color.yellow shape)
+        height = 300
+        bgForm color = square height
+          |> filled color
+          |> move (0, -height / 30)
+        (txt, bgColorForm) = case state.spec of
+          A -> (fromString "A", bgForm Color.lightOrange )
+          B -> (fromString "B", bgForm Color.lightGreen )
+          C -> (fromString "C", bgForm Color.lightYellow )
         txtForm = txt
-          |> Text.height 300
+          |> Text.height height
           |> monospace
           |> centered
           |> toForm
       in
-        [bgForm, txtForm]
+        [bgColorForm, txtForm]
 
 
 
