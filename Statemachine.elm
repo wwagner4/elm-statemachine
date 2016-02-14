@@ -14,6 +14,7 @@ import Easing exposing (..)
 type alias Model =
   { state : State
   , pos : Pos
+  , rot : Float
   , startTime : Time
   , duration : Time }
 
@@ -22,6 +23,7 @@ model : State -> Pos -> Time -> Time -> Model
 model state pos startTime duration =
   { state = state
   , pos = pos
+  , rot = 0
   , startTime = startTime
   , duration = duration }
 
@@ -120,7 +122,7 @@ updateModel time maybeModel =
 
 
 initial : Time -> Model
-initial time = modelA (pos 100 100) time
+initial time = modelA (pos 0 0) time
 
 
 view1 : (Int, Int) -> Maybe Model -> Element
