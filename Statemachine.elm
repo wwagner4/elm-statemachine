@@ -11,6 +11,18 @@ import Random exposing (..)
 import Easing exposing (..)
 
 
+type alias Pos =
+  { x : Float
+  , y : Float }
+
+
+pos : Float -> Float -> Pos
+pos x y = { x = x, y = y }
+
+posZero : Pos
+posZero = {x = 0, y = 0 }
+
+
 type alias Model =
   { state : State
   , pos : Pos
@@ -31,18 +43,6 @@ model state pos rot startTime duration =
 modelA pos rot time = model (A (moveBehaviour pos time)) pos rot time (Time.second * 4)
 modelB pos rot time = model B pos rot time (Time.second * 1)
 modelC pos rot time = model C pos rot time (Time.second * 1)
-
-
-type alias Pos =
-  { x : Float
-  , y : Float }
-
-
-pos : Float -> Float -> Pos
-pos x y = { x = x, y = y }
-
-posZero : Pos
-posZero = {x = 0, y = 0 }
 
 
 updatePos : Pos -> Float -> Float -> Pos
