@@ -55,10 +55,16 @@ type alias StateOfA =
 stateOfA : Pos -> Time -> StateOfA
 stateOfA pos time =
   let
-    s0 = initialSeed (round time)
     maxVal = 400
-    (dx, s1) = generate (Random.float -maxVal maxVal) s0
-    (dy, s2) = generate (Random.float -maxVal maxVal) s1
+
+    gen : Float -> Generator Float
+    gen value =
+      if value < 0 then Random.float (-maxVal * 0.3) maxVal
+      else Random.float -maxVal (maxVal * 0.3)
+
+    s0 = initialSeed (round time)
+    (dx, s1) = generate (gen pos.x) s0
+    (dy, s2) = generate (gen pos.y) s1
   in
     { startPos = pos
     , endPos = { x = pos.x + dx, y = pos.y + dy } }
@@ -155,7 +161,7 @@ view (w, h) maybeModel =
 
 
 modelSignal : Signal (Maybe Model)
-modelSignal = Signal.foldp updateModel Nothing (every (Time.millisecond * 10))
+modelSignal = Signal.foldp updateModel Nothing (every (Time.millisecond * 100))
 
 
 main = Signal.map2 view dimensions modelSignal
