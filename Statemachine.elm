@@ -7,6 +7,7 @@ import Signal exposing (..)
 import Window exposing (..)
 import Color exposing (..)
 import List exposing (..)
+import Random exposing (..)
 
 
 type alias Model =
@@ -24,7 +25,7 @@ model state pos startTime duration =
   , duration = duration }
 
 
-modelA pos time = model A pos time (Time.second * 2)
+modelA pos time = model (A (astate pos time)) pos time (Time.second * 2)
 modelB pos time = model B pos time (Time.second * 0.5)
 modelC pos time = model C pos time (Time.second * 0.5)
 
@@ -46,7 +47,17 @@ updatePos pos dx dy =
   { x = pos.x + dx, y = pos.y + dy }
 
 
-type State = A | B | C
+type alias AState =
+  { startPos : Pos
+  , seed : Seed }
+
+astate : Pos -> Time -> AState
+astate pos time =
+  { startPos = pos
+  , seed = initialSeed (round time) }
+
+
+type State = A AState | B | C
 
 
 type Transition = TransitionReady | TransitionProcessing
@@ -63,14 +74,14 @@ updateModel time maybeModel =
 
     updateOnReady : Model -> Model
     updateOnReady model = case model.state of
-      A -> modelB model.pos time
+      A astate -> modelB model.pos time
       B -> modelC model.pos time
       C -> modelA model.pos time
 
 
     updateOnProcessing : Model -> Model
     updateOnProcessing model = case model.state of
-      A -> { model | pos = updatePos model.pos 1 1 }
+      A astate -> { model | pos = updatePos model.pos 1 1 }
       B -> { model | pos = updatePos model.pos 0 -4 }
       C -> { model | pos = updatePos model.pos -4 0 }
 
@@ -103,7 +114,7 @@ view (w, h) maybeModel =
       let
         shape = square 250
         (txt, bgForm) = case model.state of
-          A -> (fromString "A", filled Color.red shape)
+          A astate -> (fromString "A", filled Color.red shape)
           B -> (fromString "B", filled Color.green shape)
           C -> (fromString "C", filled Color.yellow shape)
         txtForm = txt
