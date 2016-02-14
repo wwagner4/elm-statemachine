@@ -3,15 +3,16 @@ import Mouse exposing (..)
 import Signal exposing (..)
 import Maybe exposing (..)
 import Time exposing (..)
+import Window exposing (..)
 
 
 type alias Inp =
-  { mousePos : (Int, Int)
+  { mousePos : (Float, Float)
   , clickCnt : Int
   , time : Time }
 
 
-inp : (Int, Int) -> Int -> Time -> Inp
+inp : (Float, Float) -> Int -> Time -> Inp
 inp (x, y) clickCnt time =
   { mousePos = (x, y)
   , clickCnt = clickCnt
@@ -31,8 +32,19 @@ inpSig =
     timeSig : Signal Time
     timeSig = Time.every (Time.millisecond * 100)
 
+    adjustPos : (Int, Int) -> (Int, Int) -> (Float, Float)
+    adjustPos (x, y) (w, h) =
+      let
+        xoff = (toFloat w) / 2
+        yoff = (toFloat h) / 2
+      in
+        ((toFloat x) - xoff, (toFloat y) - yoff)
+
+    mouseSigAdjusted : Signal (Float, Float)
+    mouseSigAdjusted = Signal.map2 adjustPos mouseSig dimensions
+
   in
-    Signal.map3 inp mouseSig clickCountSig timeSig
+    Signal.map3 inp mouseSigAdjusted clickCountSig timeSig
 
 
 main = Signal.map show inpSig
