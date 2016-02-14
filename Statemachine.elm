@@ -140,28 +140,33 @@ view1 (w, h) maybeModel = show maybeModel
 view : (Int, Int) -> Maybe Model -> Element
 view (w, h) maybeModel =
   let
-    moveToPos : Form -> Pos -> Form
-    moveToPos form pos = move (pos.x, pos.y) form
-
-
     viewModel : Model -> List Form
     viewModel model =
       let
-        shape = square 250
-        (txt, bgForm) = case model.state of
-          A moveBehaviour -> (fromString "A", filled Color.red shape)
-          B -> (fromString "B", filled Color.green shape)
-          C -> (fromString "C", filled Color.yellow shape)
-        txtForm = txt
-          |> Text.height 300
+        size = 300
+
+        bgForm : Color -> Form
+        bgForm color = circle (size * 0.6)
+          |> filled color
+
+        txtForm : String -> Form
+        txtForm txt = txt
+          |> fromString
+          |> Text.height size
           |> monospace
           |> centered
           |> toForm
-        bgMoved = moveToPos bgForm model.pos
-        txtMoved = moveToPos txtForm model.pos
-        forms = [bgMoved, txtMoved]
+          |> move (0, size * 0.045)
+
+        grp = case model.state of
+          A _ -> group [bgForm Color.red, txtForm "A"]
+          B -> group [bgForm Color.green, txtForm "B"]
+          C -> group [bgForm Color.yellow, txtForm "C"]
+        grpTransformed = grp
+          |> move (model.pos.x, model.pos.y)
+          |> rotate model.rot
       in
-        List.map (rotate (model.rot)) forms
+        [grpTransformed]
 
 
     forms = case maybeModel of
