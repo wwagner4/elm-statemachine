@@ -43,8 +43,9 @@ model state pos rot startTime duration =
 modelA pos rot time =
   let
     seed = initialSeed (round time)
+    behav = moveBehaviour pos seed
   in
-    model (A (moveBehaviour pos seed)) pos rot time (Time.second * 4)
+    model (A behav) pos rot time (Time.second * 4)
 
 modelB pos rot time = model B pos rot time (Time.second * 1)
 modelC pos rot time = model C pos rot time (Time.second * 1)
