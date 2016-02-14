@@ -28,7 +28,7 @@ model state pos rot startTime duration =
   , duration = duration }
 
 
-modelA pos rot time = model (A (stateOfA pos time)) pos rot time (Time.second * 4)
+modelA pos rot time = model (A (moveBehaviour pos time)) pos rot time (Time.second * 4)
 modelB pos rot time = model B pos rot time (Time.second * 1)
 modelC pos rot time = model C pos rot time (Time.second * 1)
 
@@ -50,12 +50,12 @@ updatePos pos dx dy =
   { x = pos.x + dx, y = pos.y + dy }
 
 
-type alias StateOfA =
+type alias MoveBehaviour =
   { startPos : Pos
   , endPos : Pos }
 
-stateOfA : Pos -> Time -> StateOfA
-stateOfA pos time =
+moveBehaviour : Pos -> Time -> MoveBehaviour
+moveBehaviour pos time =
   let
     maxVal = 400
 
@@ -72,7 +72,7 @@ stateOfA pos time =
     , endPos = { x = pos.x + dx, y = pos.y + dy } }
 
 
-type State = A StateOfA | B | C
+type State = A MoveBehaviour | B | C
 
 
 type Transition = TransitionReady | TransitionProcessing
@@ -90,7 +90,7 @@ updateModel time maybeModel =
     updateOnReady : Model -> Model
     updateOnReady model =
       case model.state of
-        A stateOfA -> modelB model.pos model.rot time
+        A moveBehaviour -> modelB model.pos model.rot time
         B -> modelC model.pos model.rot time
         C -> modelA model.pos model.rot time
 
@@ -98,17 +98,17 @@ updateModel time maybeModel =
     updateOnProcessing : Model -> Model
     updateOnProcessing model =
       let
-        updatePosOnA : StateOfA -> Model -> Pos
-        updatePosOnA stateOfA model =
+        updatePosOn : MoveBehaviour -> Model -> Pos
+        updatePosOn moveBehaviour model =
           let
             relTime = time - model.startTime
-            x = ease easeOutCubic Easing.float stateOfA.startPos.x stateOfA.endPos.x model.duration relTime
-            y = ease easeOutCubic Easing.float stateOfA.startPos.y stateOfA.endPos.y model.duration relTime
+            x = ease easeOutCubic Easing.float moveBehaviour.startPos.x moveBehaviour.endPos.x model.duration relTime
+            y = ease easeOutCubic Easing.float moveBehaviour.startPos.y moveBehaviour.endPos.y model.duration relTime
           in
             { x = x, y = y }
       in
         case model.state of
-          A stateOfA -> { model | pos = (updatePosOnA stateOfA model) }
+          A moveBehaviour -> { model | pos = (updatePosOn moveBehaviour model) }
           B -> model
           C -> { model | rot = model.rot + 0.1 }
 
@@ -141,7 +141,7 @@ view (w, h) maybeModel =
       let
         shape = square 250
         (txt, bgForm) = case model.state of
-          A stateOfA -> (fromString "A", filled Color.red shape)
+          A moveBehaviour -> (fromString "A", filled Color.red shape)
           B -> (fromString "B", filled Color.green shape)
           C -> (fromString "C", filled Color.yellow shape)
         txtForm = txt
