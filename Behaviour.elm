@@ -126,8 +126,8 @@ view1 (w, h) maybeModel = show maybeModel
 view : (Int, Int) -> Maybe Model -> Element
 view (w, h) maybeModel =
   let
-    moveToPos : Form -> Pos -> Form
-    moveToPos form pos = move (pos.x, pos.y) form
+    moveToPos : Pos -> Form -> Form
+    moveToPos pos form = move (pos.x, pos.y) form
 
 
     viewModel : Model -> List Form
@@ -148,15 +148,15 @@ view (w, h) maybeModel =
           |> toForm
           |> move (0, height / 25)
 
-        (txtForm1, bgColorForm) = case model.state of
-          A moveBehaviour -> (txtForm "A", bgForm Color.red)
-          B -> (txtForm "B", bgForm Color.green)
-          C -> (txtForm "C", bgForm Color.yellow)
-        grp = group [bgColorForm, txtForm1]
-        grpMoved = moveToPos grp model.pos
-        forms = [grpMoved]
+        grp = case model.state of
+          A _ -> group [bgForm Color.red, txtForm "A"]
+          B -> group [bgForm Color.green, txtForm "B"]
+          C -> group [bgForm Color.yellow, txtForm "C"]
+        grpTransformed = grp
+          |> moveToPos model.pos
+          |> rotate model.rot
       in
-        List.map (rotate (model.rot)) forms
+        [grpTransformed]
 
 
     forms = case maybeModel of
