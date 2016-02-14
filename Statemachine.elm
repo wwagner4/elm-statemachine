@@ -9,6 +9,7 @@ import Color exposing (..)
 import List exposing (..)
 import Random exposing (..)
 import Easing exposing (..)
+import Mouse exposing (..)
 
 
 type alias Pos =
@@ -51,11 +52,6 @@ modelB pos rot time = model B pos rot time (Time.second * 1)
 modelC pos rot time = model C pos rot time (Time.second * 1)
 
 
-updatePos : Pos -> Float -> Float -> Pos
-updatePos pos dx dy =
-  { x = pos.x + dx, y = pos.y + dy }
-
-
 type alias MoveBehaviour =
   { startPos : Pos
   , endPos : Pos }
@@ -83,33 +79,46 @@ type State = A MoveBehaviour | B | C
 type Transition = TransitionReady | TransitionProcessing
 
 
-updateModel : Time -> Maybe Model -> Maybe Model
-updateModel time maybeModel =
+type alias Inp =
+  { mousePos : (Float, Float)
+  , clickCnt : Int
+  , time : Time }
+
+
+inp : (Float, Float) -> Int -> Time -> Inp
+inp (x, y) clickCnt time =
+  { mousePos = (x, y)
+  , clickCnt = clickCnt
+  , time = time }
+
+
+updateModel : Inp -> Maybe Model -> Maybe Model
+updateModel inp maybeModel =
   let
     transitionOf : Model -> Transition
     transitionOf model =
-      if ((time - model.startTime) > model.duration) then TransitionReady
+      if ((inp.time - model.startTime) > model.duration) then TransitionReady
       else TransitionProcessing
 
 
     updatePosOn : MoveBehaviour -> Model -> Pos
     updatePosOn moveBehaviour model =
       let
-        relTime = time - model.startTime
+        relTime = inp.time - model.startTime
         x = ease easeOutBounce Easing.float moveBehaviour.startPos.x moveBehaviour.endPos.x model.duration relTime
         y = ease easeOutBounce Easing.float moveBehaviour.startPos.y moveBehaviour.endPos.y model.duration relTime
       in
         { x = x, y = y }
 
 
-    model = withDefault (initial time) maybeModel
+    model = withDefault (initial inp.time) maybeModel
     nextModel =
       case transitionOf model of
         TransitionReady ->
           case model.state of
-            A moveBehaviour -> modelB model.pos model.rot time
-            B -> modelC model.pos model.rot time
-            C -> modelA model.pos model.rot time
+            A moveBehaviour -> modelB model.pos model.rot inp.time
+            B -> modelC model.pos model.rot inp.time
+            C -> modelA model.pos model.rot inp.time
         TransitionProcessing ->
           case model.state of
             A moveBehaviour -> { model | pos = (updatePosOn moveBehaviour model) }
@@ -162,8 +171,36 @@ view (w, h) maybeModel =
     collage w h forms
 
 
+inpSig : Signal Inp
+inpSig =
+  let
+    mouseSig : Signal (Int, Int)
+    mouseSig = Signal.sampleOn clicks Mouse.position
+
+    clickCountSig : Signal Int
+    clickCountSig =
+      foldp (\click total -> total + 1) 0 Mouse.clicks
+
+    timeSig : Signal Time
+    timeSig = Time.every (Time.millisecond * 20)
+
+    adjustPos : (Int, Int) -> (Int, Int) -> (Float, Float)
+    adjustPos (x, y) (w, h) =
+      let
+        xoff = (toFloat w) / 2
+        yoff = (toFloat h) / 2
+      in
+        ((toFloat x) - xoff, (toFloat y) - yoff)
+
+    mouseAdjustedSig : Signal (Float, Float)
+    mouseAdjustedSig = Signal.map2 adjustPos mouseSig dimensions
+
+  in
+    Signal.map3 inp mouseAdjustedSig clickCountSig timeSig
+
+
 modelSignal : Signal (Maybe Model)
-modelSignal = Signal.foldp updateModel Nothing (every (Time.millisecond * 30))
+modelSignal = Signal.foldp updateModel Nothing inpSig
 
 
 main = Signal.map2 view dimensions modelSignal
