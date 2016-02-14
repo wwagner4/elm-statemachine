@@ -40,7 +40,12 @@ model state pos rot startTime duration =
   , duration = duration }
 
 
-modelA pos rot time = model (A (moveBehaviour pos time)) pos rot time (Time.second * 4)
+modelA pos rot time =
+  let
+    seed = initialSeed (round time)
+  in
+    model (A (moveBehaviour pos seed)) pos rot time (Time.second * 4)
+
 modelB pos rot time = model B pos rot time (Time.second * 1)
 modelC pos rot time = model C pos rot time (Time.second * 1)
 
@@ -54,8 +59,8 @@ type alias MoveBehaviour =
   { startPos : Pos
   , endPos : Pos }
 
-moveBehaviour : Pos -> Time -> MoveBehaviour
-moveBehaviour pos time =
+moveBehaviour : Pos -> Seed -> MoveBehaviour
+moveBehaviour pos seed =
   let
     maxVal = 600
 
@@ -64,8 +69,7 @@ moveBehaviour pos time =
       if value < 0 then Random.float (-maxVal * 0.3) maxVal
       else Random.float -maxVal (maxVal * 0.3)
 
-    s0 = initialSeed (round time)
-    (dx, s1) = generate (gen pos.x) s0
+    (dx, s1) = generate (gen pos.x) seed
     (dy, s2) = generate (gen pos.y) s1
   in
     { startPos = pos
