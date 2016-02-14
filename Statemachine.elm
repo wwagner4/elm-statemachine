@@ -49,12 +49,17 @@ updatePos pos dx dy =
 
 type alias AState =
   { startPos : Pos
-  , seed : Seed }
+  , endPos : Pos }
 
 astate : Pos -> Time -> AState
 astate pos time =
-  { startPos = pos
-  , seed = initialSeed (round time) }
+  let
+    s0 = initialSeed (round time)
+    (dx, s1) = generate (Random.float -10 10) s0
+    (dy, s2) = generate (Random.float -10 10) s1
+  in
+    { startPos = pos
+    , endPos = { x = pos.x + dx, y = pos.y + dy } }
 
 
 type State = A AState | B | C
