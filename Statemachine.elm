@@ -19,18 +19,18 @@ type alias Model =
   , duration : Time }
 
 
-model : State -> Pos -> Time -> Time -> Model
-model state pos startTime duration =
+model : State -> Pos -> Float -> Time -> Time -> Model
+model state pos rot startTime duration =
   { state = state
   , pos = pos
-  , rot = 0
+  , rot = rot
   , startTime = startTime
   , duration = duration }
 
 
-modelA pos time = model (A (stateOfA pos time)) pos time (Time.second * 4)
-modelB pos time = model B pos time (Time.second * 1)
-modelC pos time = model C pos time (Time.second * 1)
+modelA pos rot time = model (A (stateOfA pos time)) pos rot time (Time.second * 4)
+modelB pos rot time = model B pos rot time (Time.second * 1)
+modelC pos rot time = model C pos rot time (Time.second * 1)
 
 
 type alias Pos =
@@ -90,9 +90,9 @@ updateModel time maybeModel =
     updateOnReady : Model -> Model
     updateOnReady model =
       case model.state of
-        A stateOfA -> modelB model.pos time
-        B -> modelC model.pos time
-        C -> modelA model.pos time
+        A stateOfA -> modelB model.pos model.rot time
+        B -> modelC model.pos model.rot time
+        C -> modelA model.pos model.rot time
 
 
     updateOnProcessing : Model -> Model
@@ -122,7 +122,7 @@ updateModel time maybeModel =
 
 
 initial : Time -> Model
-initial time = modelA (pos 0 0) time
+initial time = modelA (pos 0 0) 0 time
 
 
 view1 : (Int, Int) -> Maybe Model -> Element
