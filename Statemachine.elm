@@ -57,7 +57,7 @@ type alias MoveBehaviour =
 moveBehaviour : Pos -> Time -> MoveBehaviour
 moveBehaviour pos time =
   let
-    maxVal = 400
+    maxVal = 600
 
     gen : Float -> Generator Float
     gen value =
@@ -87,36 +87,30 @@ updateModel time maybeModel =
       else TransitionProcessing
 
 
-    updateOnReady : Model -> Model
-    updateOnReady model =
-      case model.state of
-        A moveBehaviour -> modelB model.pos model.rot time
-        B -> modelC model.pos model.rot time
-        C -> modelA model.pos model.rot time
-
-
-    updateOnProcessing : Model -> Model
-    updateOnProcessing model =
+    updatePosOn : MoveBehaviour -> Model -> Pos
+    updatePosOn moveBehaviour model =
       let
-        updatePosOn : MoveBehaviour -> Model -> Pos
-        updatePosOn moveBehaviour model =
-          let
-            relTime = time - model.startTime
-            x = ease easeOutCubic Easing.float moveBehaviour.startPos.x moveBehaviour.endPos.x model.duration relTime
-            y = ease easeOutCubic Easing.float moveBehaviour.startPos.y moveBehaviour.endPos.y model.duration relTime
-          in
-            { x = x, y = y }
+        relTime = time - model.startTime
+        x = ease easeOutBounce Easing.float moveBehaviour.startPos.x moveBehaviour.endPos.x model.duration relTime
+        y = ease easeOutBounce Easing.float moveBehaviour.startPos.y moveBehaviour.endPos.y model.duration relTime
       in
-        case model.state of
-          A moveBehaviour -> { model | pos = (updatePosOn moveBehaviour model) }
-          B -> model
-          C -> { model | rot = model.rot + 0.1 }
+        { x = x, y = y }
 
 
     model = withDefault (initial time) maybeModel
-    nextModel = case transitionOf model of
-      TransitionReady -> updateOnReady model
-      TransitionProcessing -> updateOnProcessing model
+    nextModel =
+      case transitionOf model of
+        TransitionReady ->
+          case model.state of
+            A moveBehaviour -> modelB model.pos model.rot time
+            B -> modelC model.pos model.rot time
+            C -> modelA model.pos model.rot time
+        TransitionProcessing ->
+          case model.state of
+            A moveBehaviour -> { model | pos = (updatePosOn moveBehaviour model) }
+            B -> model
+            C -> { model | rot = model.rot + 0.1 }
+
   in
     Just nextModel
 
@@ -164,7 +158,7 @@ view (w, h) maybeModel =
 
 
 modelSignal : Signal (Maybe Model)
-modelSignal = Signal.foldp updateModel Nothing (every (Time.millisecond * 100))
+modelSignal = Signal.foldp updateModel Nothing (every (Time.millisecond * 30))
 
 
 main = Signal.map2 view dimensions modelSignal
