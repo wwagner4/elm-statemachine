@@ -56,7 +56,7 @@ modelD pos rot time =
     seed = initialSeed (round time)
     behav = moveBehaviour MovementTypeB pos seed
   in
-    model (A behav) pos rot time (Time.second * 4)
+    model (A behav) pos rot time (Time.second * 0.5)
 
 
 
@@ -118,12 +118,21 @@ updateModel inp maybeModel =
 
     updatePosOn : MoveBehaviour -> Model -> Pos
     updatePosOn moveBehaviour model =
-      let
-        relTime = inp.time - model.startTime
-        x = ease easeOutBounce Easing.float moveBehaviour.startPos.x moveBehaviour.endPos.x model.duration relTime
-        y = ease easeOutBounce Easing.float moveBehaviour.startPos.y moveBehaviour.endPos.y model.duration relTime
-      in
-        { x = x, y = y }
+      case moveBehaviour.movementType of
+        MovementTypeA ->
+          let
+            relTime = inp.time - model.startTime
+            x = ease easeOutBounce Easing.float moveBehaviour.startPos.x moveBehaviour.endPos.x model.duration relTime
+            y = ease easeOutBounce Easing.float moveBehaviour.startPos.y moveBehaviour.endPos.y model.duration relTime
+          in
+            { x = x, y = y }
+        MovementTypeB ->
+          let
+            relTime = inp.time - model.startTime
+            x = ease easeOutSine Easing.float moveBehaviour.startPos.x moveBehaviour.endPos.x model.duration relTime
+            y = ease easeOutSine Easing.float moveBehaviour.startPos.y moveBehaviour.endPos.y model.duration relTime
+          in
+            { x = x, y = y }
 
 
     model = withDefault (initial inp.time) maybeModel
