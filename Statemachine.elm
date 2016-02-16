@@ -44,7 +44,7 @@ model state pos rot startTime duration =
 modelA pos rot time =
   let
     seed = initialSeed (round time)
-    behav = moveBehaviour pos seed
+    behav = moveBehaviour MovementTypeA pos seed
   in
     model (A behav) pos rot time (Time.second * 4)
 
@@ -52,12 +52,16 @@ modelB pos rot time = model B pos rot time (Time.second * 1)
 modelC pos rot time = model C pos rot time (Time.second * 1)
 
 
+type MovementType = MovementTypeA | MovementTypeB
+
+
 type alias MoveBehaviour =
   { startPos : Pos
-  , endPos : Pos }
+  , endPos : Pos
+  , movementType : MovementType }
 
-moveBehaviour : Pos -> Seed -> MoveBehaviour
-moveBehaviour pos seed =
+moveBehaviour : MovementType -> Pos -> Seed -> MoveBehaviour
+moveBehaviour movementType pos seed =
   let
     maxVal = 600
 
@@ -70,7 +74,8 @@ moveBehaviour pos seed =
     (dy, s2) = generate (gen pos.y) s1
   in
     { startPos = pos
-    , endPos = { x = pos.x + dx, y = pos.y + dy } }
+    , endPos = { x = pos.x + dx, y = pos.y + dy }
+    , movementType = movementType }
 
 
 type State = A MoveBehaviour | B | C
