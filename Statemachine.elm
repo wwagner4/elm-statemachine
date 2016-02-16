@@ -51,6 +51,14 @@ modelA pos rot time =
 modelB pos rot time = model B pos rot time (Time.second * 1)
 modelC pos rot time = model C pos rot time (Time.second * 1)
 
+modelD pos rot time =
+  let
+    seed = initialSeed (round time)
+    behav = moveBehaviour MovementTypeB pos seed
+  in
+    model (A behav) pos rot time (Time.second * 4)
+
+
 
 type MovementType = MovementTypeA | MovementTypeB
 
@@ -78,7 +86,7 @@ moveBehaviour movementType pos seed =
     , movementType = movementType }
 
 
-type State = A MoveBehaviour | B | C
+type State = A MoveBehaviour | B | C | D MoveBehaviour
 
 
 type Transition = TransitionReady | TransitionProcessing
@@ -126,11 +134,17 @@ updateModel inp maybeModel =
             A moveBehaviour -> modelB model.pos model.rot inp.time
             B -> modelC model.pos model.rot inp.time
             C -> modelA model.pos model.rot inp.time
+            D moveBehaviour -> modelB model.pos model.rot inp.time
         TransitionProcessing ->
-          case model.state of
-            A moveBehaviour -> { model | pos = (updatePosOn moveBehaviour model) }
-            B -> model
-            C -> { model | rot = model.rot + 0.1 }
+          case inp.onClickMousePos of
+            Nothing ->
+              case model.state of
+                A moveBehaviour -> { model | pos = (updatePosOn moveBehaviour model) }
+                B -> model
+                C -> { model | rot = model.rot + 0.1 }
+                D moveBehaviour -> { model | pos = (updatePosOn moveBehaviour model) }
+            Just _ ->
+                modelD model.pos model.rot inp.time
 
   in
     Just nextModel
@@ -169,6 +183,7 @@ view (w, h) maybeModel =
           A _ -> group [bgForm Color.red, txtForm "A"]
           B -> group [bgForm Color.green, txtForm "B"]
           C -> group [bgForm Color.yellow, txtForm "C"]
+          D _ -> group [bgForm Color.lightBlue , txtForm "D"]
         grpTransformed = grp
           |> move (model.pos.x, model.pos.y)
           |> rotate model.rot
