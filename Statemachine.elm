@@ -51,12 +51,13 @@ modelA pos rot time =
 modelB pos rot time = model B pos rot time (Time.second * 1)
 modelC pos rot time = model C pos rot time (Time.second * 1)
 
-modelD pos rot time =
+modelD : Pos -> (Float, Float) -> Float -> Time -> Model
+modelD startPos (x, y) rot time =
   let
     seed = initialSeed (round time)
-    behav = moveBehaviour MovementTypeB pos seed
+    behav = moveBehaviour1 MovementTypeB startPos (pos x y)
   in
-    model (A behav) pos rot time (Time.second * 0.5)
+    model (D behav) startPos rot time (Time.second * 5)
 
 
 
@@ -84,6 +85,13 @@ moveBehaviour movementType pos seed =
     { startPos = pos
     , endPos = { x = pos.x + dx, y = pos.y + dy }
     , movementType = movementType }
+
+
+moveBehaviour1 : MovementType -> Pos -> Pos -> MoveBehaviour
+moveBehaviour1 movementType startPos endPos =
+  { startPos = startPos
+  , endPos = endPos
+  , movementType = movementType }
 
 
 type State = A MoveBehaviour | B | C | D MoveBehaviour
@@ -129,8 +137,8 @@ updateModel inp maybeModel =
         MovementTypeB ->
           let
             relTime = inp.time - model.startTime
-            x = ease easeOutSine Easing.float moveBehaviour.startPos.x moveBehaviour.endPos.x model.duration relTime
-            y = ease easeOutSine Easing.float moveBehaviour.startPos.y moveBehaviour.endPos.y model.duration relTime
+            x = ease easeOutElastic Easing.float moveBehaviour.startPos.x moveBehaviour.endPos.x model.duration relTime
+            y = ease easeOutElastic Easing.float moveBehaviour.startPos.y moveBehaviour.endPos.y model.duration relTime
           in
             { x = x, y = y }
 
@@ -152,8 +160,8 @@ updateModel inp maybeModel =
                 B -> model
                 C -> { model | rot = model.rot + 0.1 }
                 D moveBehaviour -> { model | pos = (updatePosOn moveBehaviour model) }
-            Just _ ->
-                modelD model.pos model.rot inp.time
+            Just mouseCoords ->
+                modelD model.pos mouseCoords model.rot inp.time
 
   in
     Just nextModel
@@ -173,10 +181,10 @@ view (w, h) maybeModel =
     viewModel : Model -> List Form
     viewModel model =
       let
-        size = 300
+        size = 500
 
         bgForm : Color -> Form
-        bgForm color = circle (size * 0.6)
+        bgForm color = square (size * 0.8)
           |> filled color
 
         txtForm : String -> Form
@@ -186,7 +194,7 @@ view (w, h) maybeModel =
           |> monospace
           |> centered
           |> toForm
-          |> move (0, size * 0.045)
+          |> move (0, -size * 0.04)
 
         grp = case model.state of
           A _ -> group [bgForm Color.red, txtForm "A"]
@@ -232,7 +240,7 @@ inpSig timePeriode =
             xoff = (toFloat w) / 2
             yoff = (toFloat h) / 2
           in
-            ((toFloat x) - xoff, (toFloat y) - yoff)
+            ((toFloat x) - xoff, yoff - (toFloat y) )
 
         mouseSigAdjusted : Signal (Float, Float)
         mouseSigAdjusted = Signal.map2 adjustPos mouseSig dimensions
@@ -252,7 +260,7 @@ inpSig timePeriode =
 
 
 modelSignal : Signal (Maybe Model)
-modelSignal = Signal.foldp updateModel Nothing (inpSig (Time.millisecond * 10))
+modelSignal = Signal.foldp updateModel Nothing (inpSig (Time.millisecond * 100))
 
 
 main = Signal.map2 view dimensions modelSignal
